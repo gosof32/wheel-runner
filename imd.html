@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wheel Runner · Host on IMD</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#0a0a0b;--card:#141416;--line:#26262b;--tx:#e9e9ec;--mut:#9a9aa3;--amb:#ffae1a;--ok:#4ade80;--bad:#f87171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;padding:24px 16px}
+.w{max-width:620px;margin:0 auto}h1{font-size:22px;margin:0 0 4px}h1 b{color:var(--amb)}p{color:var(--mut);margin:6px 0 16px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+.row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}.row:last-child{border:0}
+.row span:first-child{color:var(--mut)}.row span:last-child{text-align:right;word-break:break-all}
+button{width:100%;padding:14px;border-radius:12px;border:0;background:var(--amb);color:#1a1206;font:inherit;font-weight:700;cursor:pointer;margin-top:8px}
+button:disabled{opacity:.4;cursor:not-allowed}button.sec{background:transparent;color:var(--tx);border:1px solid var(--line)}
+#log{white-space:pre-wrap;font-size:13px;color:var(--mut);min-height:20px}#log .ok{color:var(--ok)}#log .bad{color:var(--bad)}
+a{color:var(--amb)}details summary{cursor:pointer;color:var(--mut)}pre{white-space:pre-wrap;word-break:break-all;font-size:12px;color:var(--mut)}
+</style></head><body><div class="w">
+<h1>Host <b>Wheel Runner</b> on IMD</h1>
+<p>Bayar job IMD pertama dari wallet yang sudah terverifikasi di profil Genesis kamu. Swarm memeriksa isi game lalu menghostingnya di wheel-runner.imd.site. Proyeknya jadi milik wallet ini.</p>
+
+<div class="c">
+ <div class="row"><span>Jaringan</span><span>Ethereum mainnet</span></div>
+ <div class="row"><span>Harga</span><span>0.5 IMD + gas ETH</span></div>
+ <div class="row"><span>Aksi</span><span>job.open (site-content-check, host)</span></div>
+ <div class="row"><span>Sumber</span><span>gosof32/wheel-runner @ ff610ca</span></div>
+ <div class="row"><span>Label situs</span><span>wheel-runner</span></div>
+</div>
+
+<div class="c">
+ <div class="row"><span>Wallet</span><span id="acct">belum terhubung</span></div>
+ <div class="row"><span>ETH</span><span id="eth">-</span></div>
+ <div class="row"><span>IMD</span><span id="imd">-</span></div>
+ <div class="row"><span>Allowance ke Intake</span><span id="alw">-</span></div>
+ <button id="bConnect">Connect wallet</button>
+ <button id="bApprove" disabled>1. Approve 0.5 IMD</button>
+ <button id="bPay" disabled>2. Bayar 0.5 IMD &amp; kirim job</button>
+</div>
+
+<div class="c"><div id="log">Pakai wallet biasa (bukan smart-contract wallet), yang sama dengan yang terverifikasi di squeekchain.com/genesis/me.</div></div>
+
+<details class="c"><summary>Isi brief (publik, terkirim on-chain)</summary><pre id="brief"></pre></details>
+<p><a href="/">← kembali ke game</a></p>
+</div>
+<script>
+const INTAKE="0xa43e6f75ee006411f79ac1c84120606c2330de82";
+const IMD="0xd34a99bc0f67ae1bbd63c660e6d0b0dd03e263b7";
+const PRICE=500000000000000000n;
+const BRIEF={"objective":"Host Wheel Runner, an existing finished static browser game for Squeekchain, exactly as it is in this repository (index.html at the root, no build step). Do not rewrite or redesign it. Wheel Runner is a dot-matrix endless runner whose speed and score multiplier follow Squeektoshi the hamster's live wheel RPM from the Squeekchain public API (api.squeekchain.com/v1/status and /v1/economy/state), with an on-chain fallback that reads SqueekCore.state() on Ethereum Sepolia at 0x74665dAecA35A2303e767E76a2FF1FB6F93e119f. When the hamster sleeps the game switches to Night Mode, a new Squeek block grants a Golden Wheel shield, and players can sign their score with a Sepolia wallet (personal_sign, no transaction). Check the site content and pin it.","repoUrl":"https://github.com/gosof32/wheel-runner.git","baseCommit":"ff610caa6472ecf9852efd18451ff4f1fa255235","shape":"chain","steps":[{"skill":"site-content-check"}],"ipfs":"wheel-runner","github":false};
+const $=id=>document.getElementById(id);
+$("brief").textContent=JSON.stringify(BRIEF,null,2);
+let me=null;const eth=window.ethereum;
+function log(m,c){const d=document.createElement("div");if(c)d.className=c;d.textContent=m;$("log").appendChild(d)}
+const pad=h=>h.replace(/^0x/,"").padStart(64,"0");
+const padR=h=>{h=h.replace(/^0x/,"");return h+"0".repeat((64-h.length%64)%64)};
+const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,"0")).join("");
+const fmt=v=>(Number(v/10n**12n)/1e6).toFixed(4);
+async function call(to,data){return BigInt(await eth.request({method:"eth_call",params:[{to,data},"latest"]}))}
+async function refresh(){
+ const e=BigInt(await eth.request({method:"eth_getBalance",params:[me,"latest"]}));
+ const b=await call(IMD,"0x70a08231"+pad(me));
+ const a=await call(IMD,"0xdd62ed3e"+pad(me)+pad(INTAKE));
+ $("eth").textContent=fmt(e);$("imd").textContent=fmt(b);$("alw").textContent=fmt(a);
+ $("bApprove").disabled=a>=PRICE||b<PRICE;$("bPay").disabled=a<PRICE||b<PRICE;
+ if(b<PRICE)log("Saldo IMD kurang dari 0.5. Beli IMD dulu di Ethereum mainnet (token "+IMD+").","bad");
+}
+async function waitTx(h){for(;;){await new Promise(r=>setTimeout(r,4000));const r=await eth.request({method:"eth_getTransactionReceipt",params:[h]});if(r){if(r.status!=="0x1")throw new Error("Transaksi gagal: "+h);return r}}}
+$("bConnect").onclick=async()=>{
+ if(!eth){log("Wallet tidak ditemukan. Buka halaman ini di browser MetaMask.","bad");if(/Android|iPhone/i.test(navigator.userAgent))location.href="https://metamask.app.link/dapp/"+location.host+location.pathname;return}
+ try{
+  [me]=await eth.request({method:"eth_requestAccounts"});
+  if(await eth.request({method:"eth_chainId"})!=="0x1")await eth.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x1"}]});
+  $("acct").textContent=me.slice(0,6)+"…"+me.slice(-4);$("bConnect").textContent="Terhubung";await refresh();
+ }catch(e){log(e.message||String(e),"bad")}
+};
+$("bApprove").onclick=async()=>{try{
+ const h=await eth.request({method:"eth_sendTransaction",params:[{from:me,to:IMD,data:"0x095ea7b3"+pad(INTAKE)+pad(PRICE.toString(16))}]});
+ log("Approve terkirim: "+h);await waitTx(h);log("Approve sukses.","ok");await refresh();
+}catch(e){log(e.message||String(e),"bad")}};
+$("bPay").onclick=async()=>{try{
+ const body=new TextEncoder().encode(JSON.stringify(BRIEF));
+ const action=padR(hex(new TextEncoder().encode("job.open@job-1")));
+ const data="0x380c2cda"+action+pad((6*32).toString(16))+pad("0")+padR("00000000")+pad(IMD)+pad(PRICE.toString(16))+pad(body.length.toString(16))+padR(hex(body));
+ const h=await eth.request({method:"eth_sendTransaction",params:[{from:me,to:INTAKE,data}]});
+ log("Pembayaran terkirim: "+h);log("https://etherscan.io/tx/"+h);await waitTx(h);log("Terkonfirmasi on-chain. Menunggu IMD menerima job…","ok");
+ for(let i=0;i<90;i++){await new Promise(r=>setTimeout(r,10000));
+  const r=await fetch("https://api.imd.fun/intake/1/"+h).catch(()=>null);if(!r||!r.ok)continue;
+  const j=await r.json();const en=(j.entries||[])[0];if(!en)continue;
+  const res=en.admission&&en.admission.result;
+  if(en.state==="refused"){log("Ditolak: "+(en.reason||JSON.stringify(en)),"bad");return}
+  if(res&&res.jobId){const u="https://explorer.imd.fun/jobs/"+res.jobId;const a=document.createElement("a");a.href=u;a.target="_blank";a.textContent="Job IMD: "+u;$("log").appendChild(a);return}
+ }
+ log("Belum ada jobId. Simpan tx hash di atas dan kirim ke Hark.");
+}catch(e){log(e.message||String(e),"bad")}};
+</script></body></html>
