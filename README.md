@@ -27,7 +27,7 @@ Open `index.html` in any browser, or play the hosted version via GitHub Pages.
 - Collect 🌻 seeds, dodge mousetraps, boxes, cats and owls
 - Best score is saved in your browser
 
-If the Squeekchain API can't be reached from your browser, the game falls back to simulated wheel data and says so on the start screen.
+Data sources, in order: Squeekchain's public API (`/v1/status`, `/v1/economy/state`); if that is blocked, the game reads **SqueekCore on Ethereum Sepolia** directly (`state()` on proxy `0x74665dAecA35A2303e767E76a2FF1FB6F93e119f`: Squeek block height, cumulative work, settled round) through a public Sepolia RPC or the player's own wallet. The hamster counts as running when cumulative work grew in the last ~20 minutes (rounds are 600 s). Only if both fail does it fall back to simulated data, and the footer always says which source is live.
 
 ## Tech
 

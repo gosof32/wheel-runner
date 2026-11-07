@@ -137,8 +137,43 @@ async function poll(){
     live.rpm=isFinite(rpm)?rpm:0; live.running=run;
     const b=findKey(st,['blockheight','block_height','height','squeekheight','block'])??findKey(eco,['blockheight','block_height','height','squeekheight']);
     if(b!==undefined&&typeof b!=='object'){const n=Number(b); if(isFinite(n)){ if(live.block!==null&&n>live.block) onNewBlock(n); live.block=n; }}
-  } else simulate();
+    live.src='api';
+  } else if(!(await chainPoll())) simulate();
   hud();
+}
+/* On-chain fallback: SqueekCore.state() on Ethereum Sepolia (proxy 0x7466…119f).
+   state() -> (settledThroughRound, cumulativeWork, cumulativeBlockUnits, blockHeight, blockProgress, workPerThousandBlocks, nonce, paused)
+   Rounds are 600s; the hamster counts as running when cumulativeWork grew in the last ~20 minutes. */
+const SQUEEK_CORE='0x74665dAecA35A2303e767E76a2FF1FB6F93e119f';
+const RPCS=['https://ethereum-sepolia-rpc.publicnode.com'];
+async function chainState(){
+  for(const rpc of RPCS){
+    try{
+      const r=await fetch(rpc,{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:SQUEEK_CORE,data:'0xc19d93fb'},'latest']})});
+      const j=await r.json(); if(!j.result||j.result.length<2+64*8) continue;
+      const h=j.result.slice(2), w=i=>BigInt('0x'+h.slice(i*64,i*64+64));
+      return {round:Number(w(0)),work:Number(w(1)),height:Number(w(3)),progress:Number(w(4)),paused:w(7)!==0n};
+    }catch(e){}
+  }
+  // last resort: the connected wallet's own Sepolia RPC
+  try{ if(window.ethereum&&W3.chain==='0xaa36a7'){ const res=await window.ethereum.request({method:'eth_call',params:[{to:SQUEEK_CORE,data:'0xc19d93fb'},'latest']});
+    const h=res.slice(2), w=i=>BigInt('0x'+h.slice(i*64,i*64+64)); return {round:Number(w(0)),work:Number(w(1)),height:Number(w(3)),progress:Number(w(4)),paused:w(7)!==0n}; } }catch(e){}
+  return null;
+}
+const HKEY='wr_chain_hist';
+async function chainPoll(){
+  const cs=await chainState(); if(!cs) return false;
+  const now=Date.now();
+  let hist=[]; try{hist=JSON.parse(localStorage.getItem(HKEY))||[]}catch(e){}
+  hist.push({t:now,work:cs.work,round:cs.round}); hist=hist.filter(x=>now-x.t<40*60e3).slice(-200);
+  localStorage.setItem(HKEY,JSON.stringify(hist));
+  const recent=hist.filter(x=>now-x.t<20*60e3), first=recent[0];
+  const dWork=cs.work-first.work, dRound=Math.max(1,cs.round-first.round);
+  live.running=!cs.paused&&dWork>0;
+  live.rpm=live.running?Math.max(20,Math.min(120,Math.round(dWork/dRound/10))):0;
+  if(live.block!==null&&cs.height>live.block) onNewBlock(cs.height);
+  live.block=cs.height; live.ok=true; live.sim=false; live.src='chain';
+  return true;
 }
 let simP=Math.random()*1000;
 function simulate(){
@@ -152,7 +187,7 @@ function hud(){
   $('wstat').innerHTML=`<span class="pill" style="background:${live.running?'var(--green)':'var(--red)'};box-shadow:0 0 8px ${live.running?'var(--green)':'var(--red)'}"></span>${live.running?'RUNNING':'ASLEEP'}`;
   $('wrpm').textContent=live.rpm?live.rpm.toFixed(0):'0';
   $('wblk').textContent=live.block??'–';
-  $('src').textContent=live.sim?'Squeekchain API unreachable · simulated wheel':'Live · api.squeekchain.com/v1';
+  $('src').textContent=live.sim?'Squeekchain unreachable · simulated wheel':(live.src==='chain'?'Live · SqueekCore on Sepolia':'Live · api.squeekchain.com/v1');
   document.body.classList.toggle('night',!live.running);
 }
 poll(); setInterval(poll,15000);
