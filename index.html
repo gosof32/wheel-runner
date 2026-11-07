@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Wheel Runner — powered by Squeektoshi</title>
+<meta name="description" content="An endless runner whose speed, weather and power-ups are driven by Squeektoshi's real wheel on Squeekchain.">
+<style>
+  :root{--bg:#0d0b14;--fg:#f5efe6;--acc:#ffb84d;--grn:#5be38a;--red:#ff5d6c}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,Consolas,monospace;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  #wrap{position:fixed;inset:0;display:flex;flex-direction:column}
+  #hud{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between;padding:8px 12px;font-size:12px;background:#15111f;border-bottom:1px solid #2a2338}
+  #hud b{color:var(--acc)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  #game{flex:1;position:relative}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(13,11,20,.78);padding:20px}
+  .card{max-width:460px;width:100%;background:#1a1526;border:1px solid #3a3050;border-radius:14px;padding:22px;text-align:center}
+  .card h1{font-size:26px;color:var(--acc);letter-spacing:1px;margin-bottom:6px}
+  .card p{font-size:13px;line-height:1.55;opacity:.9;margin:8px 0}
+  .card ul{list-style:none;text-align:left;font-size:12.5px;line-height:1.6;margin:12px 0;opacity:.9}
+  .card ul li:before{content:"🐹 "}
+  .btn{display:inline-block;margin:8px 4px 0;padding:12px 18px;border:0;border-radius:10px;background:var(--acc);color:#1a1200;font:700 14px inherit;font-family:inherit;cursor:pointer}
+  .btn.alt{background:#2c2440;color:var(--fg)}
+  .pred{display:flex;gap:8px;justify-content:center;margin-top:6px}
+  .pred .btn{flex:1}
+  .pred .btn.sel{outline:3px solid var(--grn)}
+  #toast{position:absolute;left:50%;top:14%;transform:translateX(-50%);font-size:18px;font-weight:700;color:var(--acc);text-shadow:0 2px 8px #000;pointer-events:none;opacity:0;transition:opacity .3s;text-align:center;white-space:nowrap}
+  small{opacity:.6;font-size:11px}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <span><span class="dot" id="wdot"></span>Wheel: <b id="wstat">…</b></span>
+    <span>RPM <b id="wrpm">–</b></span>
+    <span>Block <b id="wblk">–</b></span>
+    <span>Score <b id="sc">0</b></span>
+    <span>Best <b id="best">0</b></span>
+  </div>
+  <div id="game">
+    <canvas id="c"></canvas>
+    <div id="toast"></div>
+    <div id="overlay">
+      <div class="card" id="menu">
+        <h1>WHEEL RUNNER</h1>
+        <p>You run on the same wheel as <b>Squeektoshi</b>. His real speed on Squeekchain sets your speed. When he sleeps, the world goes dark.</p>
+        <ul>
+          <li>Tap / Space / ↑ to jump. Tap again in the air to double-jump.</li>
+          <li>Collect seeds 🌻, dodge cats, mousetraps and cardboard.</li>
+          <li><b>Live RPM</b> = game speed &amp; score multiplier.</li>
+          <li><b>New Squeek block</b> mined = Golden Wheel shield spawns.</li>
+          <li><b>Hamster asleep</b> = Night Mode: slower, darker, seeds worth x2.</li>
+        </ul>
+        <p><b>Call it before you run:</b> will Squeektoshi still be running when your run ends?</p>
+        <div class="pred">
+          <button class="btn alt" data-p="run">🏃 Running</button>
+          <button class="btn alt" data-p="sleep">💤 Sleeping</button>
+        </div>
+        <small>Correct call = +50% bonus on your final score.</small><br>
+        <button class="btn" id="start">START RUN</button>
+        <p><small id="src">Connecting to Squeekchain…</small></p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(()=>{
+// ---------- Live Squeekchain feed ----------
+const API = ['https://api.squeekchain.com/v1','https://squeekchain.com/api/v1'];
+const live = {ok:false, running:false, rpm:0, block:null, lastBlock:null, sim:false, t:0};
+function findKey(o, names, depth=0){
+  if(!o || typeof o!=='object' || depth>4) return undefined;
+  for(const k of Object.keys(o)){ if(names.includes(k.toLowerCase())) return o[k]; }
+  for(const k of Object.keys(o)){ const v=findKey(o[k],names,depth+1); if(v!==undefined) return v; }
+}
+async function getJSON(path){
+  for(const base of API){
+    try{ const r=await fetch(base+path,{cache:'no-store'}); if(r.ok) return await r.json(); }catch(e){}
+  }
+  return null;
+}
+async function poll(){
+  const [st, eco] = await Promise.all([getJSON('/status'), getJSON('/economy/state')]);
+  if(st){
+    live.ok=true; live.sim=false;
+    let rpm = Number(findKey(st,['rpm','wheelrpm','wheel_rpm','currentrpm']) ?? 0);
+    let s = findKey(st,['status','wheelstatus','wheel_status','state','running','isrunning','is_running']);
+    let running = typeof s==='boolean' ? s : (typeof s==='string' ? /run|spin|active|moving|on/i.test(s) && !/stop|idle|sleep|off/i.test(s) : rpm>0);
+    if(rpm>0) running=true;
+    live.rpm = isFinite(rpm)?rpm:0; live.running=running;
+    const b = findKey(st,['blockheight','block_height','height','squeekheight','block']) ?? findKey(eco,['blockheight','block_height','height','squeekheight']);
+    if(b!==undefined && typeof b!=='object'){ const n=Number(b); if(isFinite(n)){ if(live.block!==null && n>live.block) onNewBlock(n); live.block=n; } }
+  } else {
+    simulate();
+  }
+  updHud();
+}
+// Fallback: if the API is unreachable (CORS / down), simulate a believable hamster so the game still plays.
+let simPhase=Math.random()*1000;
+function simulate(){
+  live.sim=true; live.ok=false;
+  simPhase+=1;
+  const awake = Math.sin(simPhase/9)>-0.35;
+  live.running=awake; live.rpm = awake ? Math.round(55+35*Math.abs(Math.sin(simPhase/3))) : 0;
+  if(live.block===null) live.block=1000+Math.floor(Math.random()*500);
+  if(awake && Math.random()<0.25){ live.block++; onNewBlock(live.block); }
+}
+function updHud(){
+  wstat.textContent = live.running ? 'RUNNING' : 'SLEEPING';
+  wdot.style.background = live.running ? 'var(--grn)' : 'var(--red)';
+  wrpm.textContent = live.rpm ? live.rpm.toFixed(0) : '0';
+  wblk.textContent = live.block ?? '–';
+  src.textContent = live.sim ? 'Squeekchain API unreachable from this browser — running on simulated wheel data.' : 'Live data: Squeekchain public API ✓';
+}
+const $=id=>document.getElementById(id);
+const wstat=$('wstat'),wdot=$('wdot'),wrpm=$('wrpm'),wblk=$('wblk'),src=$('src'),sc=$('sc'),best=$('best'),toastEl=$('toast');
+poll(); setInterval(poll,15000);
+
+// ---------- Game ----------
+const cv=$('c'), ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1, groundY=0;
+function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=cv.clientWidth; H=cv.clientHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); groundY=H*0.78; }
+addEventListener('resize',resize); resize();
+
+let bestScore = +localStorage.getItem('wr_best')||0; best.textContent=bestScore;
+let state='menu', prediction=null;
+let P, obs, seeds, parts, dist, score, seedsGot, speed, shield, nightT, lastT, spawnT, seedT, nightMult, runStart;
+function reset(){
+  P={x:W*0.18,y:groundY,vy:0,jumps:0,r:18,anim:0};
+  obs=[];seeds=[];parts=[];dist=0;speed=0;score=0;seedsGot=0;shield=0;spawnT=1;seedT=.5;nightT=live.running?0:1;runStart=performance.now();
+}
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=e=>{e.stopPropagation();prediction=b.dataset.p;document.querySelectorAll('[data-p]').forEach(x=>x.classList.toggle('sel',x===b));});
+$('start').onclick=e=>{e.stopPropagation();start();};
+function start(){ reset(); state='play'; $('overlay').style.display='none'; lastT=performance.now(); toast(live.running?`Squeektoshi is running at ${live.rpm.toFixed(0)} RPM!`:'Squeektoshi is asleep… Night Mode'); }
+function jump(){ if(state!=='play') return; if(P.jumps<2){ P.vy = P.jumps? -560 : -640; P.jumps++; puff(P.x,P.y,6,'#fff8'); } }
+addEventListener('keydown',e=>{ if(['Space','ArrowUp','KeyW'].includes(e.code)){e.preventDefault(); state==='play'?jump():(state!=='play'&&$('overlay').style.display!=='none'&&false);} });
+cv.addEventListener('pointerdown',e=>{e.preventDefault();jump();});
+
+function toast(t){ toastEl.textContent=t; toastEl.style.opacity=1; clearTimeout(toast.h); toast.h=setTimeout(()=>toastEl.style.opacity=0,2000); }
+function onNewBlock(n){ if(state==='play'){ seeds.push({x:W+40,y:groundY-120,gold:true,r:16}); toast(`⛏ Squeek block #${n} mined! Golden Wheel incoming`);} }
+function puff(x,y,n,c){ for(let i=0;i<n;i++) parts.push({x,y,vx:(Math.random()-.5)*160,vy:-Math.random()*160,l:.6,c}); }
+
+const OBS=[
+  {k:'trap',w:34,h:18},{k:'box',w:38,h:44},{k:'cat',w:46,h:38,fly:false},{k:'owl',w:40,h:28,fly:true}
+];
+function spawn(){
+  const night = !live.running;
+  const pool = night ? OBS : OBS.filter(o=>o.k!=='owl');
+  const o = {...pool[Math.floor(Math.random()*pool.length)]};
+  o.x=W+60; o.y = o.fly ? groundY-70-Math.random()*40 : groundY; obs.push(o);
+}
+
+function step(dt){
+  // speed driven by live RPM: 0 RPM (asleep) = slow night run; ~100 RPM = very fast
+  const rpm = live.running ? Math.max(20, live.rpm) : 0;
+  const target = live.running ? 260 + rpm*3.2 : 210;
+  const timeRamp = Math.min(1.6, 1 + dist/60000);
+  speed = (speed||target) + (target*timeRamp - (speed||target))*Math.min(1,dt*0.8);
+  nightT += ((live.running?0:1) - nightT)*Math.min(1,dt*0.7);
+  nightMult = live.running ? 1 : 2;
+  dist += speed*dt;
+  score += speed*dt*0.01*(1+rpm/100);
+
+  P.vy += 1700*dt; P.y += P.vy*dt;
+  if(P.y>=groundY){ P.y=groundY; P.vy=0; P.jumps=0; }
+  P.anim += dt*speed/30;
+
+  spawnT -= dt; if(spawnT<=0){ spawn(); spawnT = Math.max(.55, 1.6 - dist/40000) * (0.7+Math.random()*0.8) * (300/speed+0.4); }
+  seedT -= dt; if(seedT<=0){ const n=1+Math.floor(Math.random()*4), y=groundY-30-Math.random()*110; for(let i=0;i<n;i++) seeds.push({x:W+40+i*34,y,r:9}); seedT=.9+Math.random()*1.3; }
+
+  for(const o of obs) o.x -= speed*dt;
+  for(const s of seeds) s.x -= speed*dt;
+  obs = obs.filter(o=>o.x>-80); seeds = seeds.filter(s=>s.x>-40 && !s.got);
+
+  // collisions
+  for(const s of seeds){ if(Math.hypot(s.x-P.x,s.y-(P.y-P.r))<s.r+P.r){ s.got=true;
+      if(s.gold){ shield=6; toast('🛡 Golden Wheel shield! 6s'); puff(s.x,s.y,20,'#ffd34d'); score+=50; }
+      else { seedsGot++; score += 5*nightMult; puff(s.x,s.y,5,'#ffcc66'); } } }
+  if(shield>0) shield-=dt;
+  for(const o of obs){
+    const top=o.y-o.h, l=o.x-o.w/2+6, r=o.x+o.w/2-6;
+    const px=P.x, py=P.y-P.r;
+    if(px+P.r-4>l && px-P.r+4<r && py+P.r-4>top && py-P.r+4<o.y){
+      if(shield>0){ o.x=-999; puff(px,py,14,'#ffd34d'); score+=20; }
+      else { return gameOver(o.k); }
+    }
+  }
+  for(const p of parts){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=400*dt; p.l-=dt; }
+  parts = parts.filter(p=>p.l>0);
+  sc.textContent = Math.floor(score);
+}
+
+function gameOver(by){
+  state='over';
+  let final = Math.floor(score), bonusTxt='';
+  if(prediction){ const right = (prediction==='run')===live.running; if(right){ final=Math.floor(final*1.5); bonusTxt='✅ Your call was right: +50%'; } else bonusTxt='❌ Wrong call, no bonus'; }
+  const newBest = final>bestScore; if(newBest){ bestScore=final; localStorage.setItem('wr_best',final); best.textContent=final; }
+  const secs = ((performance.now()-runStart)/1000).toFixed(1);
+  const killers={trap:'a mousetrap',box:'a cardboard box',cat:'the cat',owl:'a night owl'};
+  $('menu').innerHTML = `<h1>${newBest?'NEW BEST!':'CAUGHT!'}</h1>
+   <p>Taken out by ${killers[by]} after ${secs}s.</p>
+   <p style="font-size:30px;color:var(--acc);font-weight:700">${final}</p>
+   <p>🌻 ${seedsGot} seeds · Squeektoshi is ${live.running?'running at '+live.rpm.toFixed(0)+' RPM':'asleep'}</p>
+   <p>${bonusTxt}</p>
+   <p><b>Next call:</b> will he be running when your run ends?</p>
+   <div class="pred"><button class="btn alt" data-p="run">🏃 Running</button><button class="btn alt" data-p="sleep">💤 Sleeping</button></div>
+   <button class="btn" id="start">RUN AGAIN</button>
+   <button class="btn alt" id="share">Share</button>`;
+  prediction=null;
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=e=>{e.stopPropagation();prediction=b.dataset.p;document.querySelectorAll('[data-p]').forEach(x=>x.classList.toggle('sel',x===b));});
+  $('start').onclick=e=>{e.stopPropagation();start();};
+  $('share').onclick=e=>{e.stopPropagation(); const t=`I scored ${final} in Wheel Runner, racing Squeektoshi's real wheel on @squeekchain 🐹 ${location.href}`; if(navigator.share) navigator.share({text:t}).catch(()=>{}); else open('https://x.com/intent/tweet?text='+encodeURIComponent(t)); };
+  $('overlay').style.display='flex';
+}
+
+// ---------- Drawing ----------
+function lerpC(a,b,t){ return a.map((v,i)=>Math.round(v+(b[i]-v)*t)); }
+const stars=[...Array(70)].map(()=>({x:Math.random(),y:Math.random()*0.6,s:Math.random()*1.6+.4}));
+let bgOff=0;
+function draw(){
+  const n = nightT||0;
+  const top = lerpC([255,190,120],[14,12,40],n), bot=lerpC([255,236,200],[40,30,70],n);
+  const g=ctx.createLinearGradient(0,0,0,groundY); g.addColorStop(0,`rgb(${top})`); g.addColorStop(1,`rgb(${bot})`);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // stars / sun-moon
+  if(n>0.05){ ctx.globalAlpha=n; ctx.fillStyle='#fff'; for(const s of stars){ ctx.fillRect(s.x*W,s.y*groundY,s.s,s.s);} ctx.globalAlpha=1; }
+  ctx.fillStyle = n>0.5 ? '#f3f0d8' : '#fff1b8'; ctx.beginPath(); ctx.arc(W*0.82,groundY*0.22,26,0,7); ctx.fill();
+  if(n>0.5){ ctx.fillStyle=`rgb(${top})`; ctx.beginPath(); ctx.arc(W*0.82+10,groundY*0.22-6,22,0,7); ctx.fill(); }
+  // giant wheel in background spinning at live RPM
+  const cx=W*0.62, cy=groundY*0.55, R=Math.min(W,H)*0.33;
+  const ang = (performance.now()/1000)*(live.rpm/60)*Math.PI*2;
+  ctx.save(); ctx.globalAlpha=0.18+0.1*(1-n); ctx.strokeStyle=n>0.5?'#9c8cff':'#7a4b1d'; ctx.lineWidth=6;
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke(); ctx.lineWidth=3;
+  for(let i=0;i<12;i++){ const a=ang+i*Math.PI/6; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R); ctx.stroke(); }
+  ctx.restore();
+  // hills parallax
+  bgOff += (state==='play'?speed:60)*0.016;
+  ctx.fillStyle = `rgb(${lerpC([214,160,96],[34,28,58],n)})`;
+  ctx.beginPath(); ctx.moveTo(0,groundY);
+  for(let x=0;x<=W+20;x+=20){ ctx.lineTo(x, groundY-40-Math.sin((x+bgOff*0.3)/90)*22); } ctx.lineTo(W,groundY); ctx.fill();
+  // ground
+  ctx.fillStyle=`rgb(${lerpC([150,98,52],[28,22,44],n)})`; ctx.fillRect(0,groundY,W,H-groundY);
+  ctx.fillStyle=`rgba(255,255,255,${0.15-n*0.08})`;
+  for(let x=-(bgOff%40);x<W;x+=40) ctx.fillRect(x,groundY+6,20,3);
+
+  // seeds
+  for(const s of seeds){ if(s.gold){ drawGold(s.x,s.y); } else { ctx.fillStyle='#3b2a14'; ctx.beginPath(); ctx.ellipse(s.x,s.y,s.r*.6,s.r,0.3,0,7); ctx.fill(); ctx.fillStyle='#e9d6a8'; ctx.beginPath(); ctx.ellipse(s.x+1,s.y,s.r*.25,s.r*.7,0.3,0,7); ctx.fill(); } }
+  // obstacles
+  for(const o of obs) drawObs(o,n);
+  // player
+  if(state!=='menu') drawHamster(P.x,P.y,P.anim, P.vy!==0);
+  // particles
+  for(const p of parts){ ctx.globalAlpha=Math.max(0,p.l/0.6); ctx.fillStyle=p.c; ctx.fillRect(p.x,p.y,3,3);} ctx.globalAlpha=1;
+  // night vignette
+  if(n>0.05){ const v=ctx.createRadialGradient(P?P.x:W/2,groundY-30,40,W/2,H/2,Math.max(W,H)); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,`rgba(0,0,10,${0.55*n})`); ctx.fillStyle=v; ctx.fillRect(0,0,W,H);
+    if(state==='play'){ ctx.fillStyle=`rgba(180,170,255,${0.8*n})`; ctx.font='bold 13px monospace'; ctx.fillText('🌙 NIGHT MODE · seeds x2',12,22);} }
+  if(state==='play' && live.running){ ctx.fillStyle='rgba(30,20,0,.75)'; ctx.font='bold 13px monospace'; ctx.fillText(`⚡ ${live.rpm.toFixed(0)} RPM · x${(1+Math.max(20,live.rpm)/100).toFixed(2)}`,12,22); }
+  if(shield>0 && state==='play'){ ctx.fillStyle='#ffd34d'; ctx.font='bold 13px monospace'; ctx.fillText(`🛡 ${shield.toFixed(1)}s`,12,42); }
+}
+function drawGold(x,y){ const t=performance.now()/200; ctx.save(); ctx.translate(x,y); ctx.rotate(t); ctx.strokeStyle='#ffd34d'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(0,0,15,0,7); ctx.stroke(); ctx.lineWidth=2; for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(i)*15,Math.sin(i)*15);ctx.stroke();} ctx.restore(); }
+function drawObs(o,n){
+  const x=o.x,y=o.y;
+  if(o.k==='trap'){ ctx.fillStyle='#a0714a'; ctx.fillRect(x-17,y-8,34,8); ctx.strokeStyle='#ccc'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y-8,10,Math.PI,0); ctx.stroke(); ctx.fillStyle='#ffd84a'; ctx.fillRect(x-4,y-12,8,4); }
+  else if(o.k==='box'){ ctx.fillStyle='#c79a5b'; ctx.fillRect(x-19,y-44,38,44); ctx.strokeStyle='#8a6532'; ctx.lineWidth=2; ctx.strokeRect(x-19,y-44,38,44); ctx.beginPath(); ctx.moveTo(x-19,y-30); ctx.lineTo(x+19,y-30); ctx.stroke(); }
+  else if(o.k==='cat'){ ctx.fillStyle=n>0.5?'#2a2a3a':'#555'; ctx.beginPath(); ctx.ellipse(x,y-16,22,14,0,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(x-18,y-30,11,0,7); ctx.fill(); ctx.beginPath(); ctx.moveTo(x-26,y-38);ctx.lineTo(x-24,y-48);ctx.lineTo(x-18,y-40);ctx.moveTo(x-16,y-40);ctx.lineTo(x-10,y-48);ctx.lineTo(x-10,y-36);ctx.fill(); ctx.fillStyle='#9cff7a'; ctx.fillRect(x-23,y-32,3,3); ctx.fillRect(x-15,y-32,3,3); }
+  else if(o.k==='owl'){ const f=Math.sin(performance.now()/90)*8; ctx.fillStyle='#6b5a8a'; ctx.beginPath(); ctx.ellipse(x,y-14,14,14,0,0,7); ctx.fill(); ctx.beginPath(); ctx.moveTo(x-12,y-14);ctx.lineTo(x-30,y-14+f);ctx.lineTo(x-12,y-6);ctx.moveTo(x+12,y-14);ctx.lineTo(x+30,y-14+f);ctx.lineTo(x+12,y-6);ctx.fill(); ctx.fillStyle='#ffe26a'; ctx.beginPath(); ctx.arc(x-5,y-17,4,0,7); ctx.arc(x+5,y-17,4,0,7); ctx.fill(); }
+}
+function drawHamster(x,y,a,air){
+  const b=air?0:Math.abs(Math.sin(a))*3;
+  ctx.save(); ctx.translate(x,y-b);
+  if(shield>0){ ctx.strokeStyle=`rgba(255,211,77,${0.5+0.4*Math.sin(performance.now()/80)})`; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(0,-18,28,0,7); ctx.stroke(); }
+  // legs
+  ctx.fillStyle='#d98c5f'; const l=air?0:Math.sin(a*2)*5;
+  ctx.fillRect(-10+l,-6,6,6); ctx.fillRect(4-l,-6,6,6);
+  // body
+  ctx.fillStyle='#f0a868'; ctx.beginPath(); ctx.ellipse(0,-18,22,17,0,0,7); ctx.fill();
+  ctx.fillStyle='#fff3e0'; ctx.beginPath(); ctx.ellipse(6,-12,12,9,0,0,7); ctx.fill();
+  // ear, eye, nose
+  ctx.fillStyle='#e08a55'; ctx.beginPath(); ctx.arc(8,-33,6,0,7); ctx.fill(); ctx.fillStyle='#ffb3a0'; ctx.beginPath(); ctx.arc(8,-33,3,0,7); ctx.fill();
+  ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(14,-22,3,0,7); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillRect(14,-24,1.5,1.5);
+  ctx.fillStyle='#ff7a8a'; ctx.beginPath(); ctx.arc(22,-17,2.5,0,7); ctx.fill();
+  ctx.restore();
+}
+
+function loop(t){
+  const dt=Math.min(0.033,(t-(lastT||t))/1000); lastT=t;
+  if(state==='play') step(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+reset(); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
