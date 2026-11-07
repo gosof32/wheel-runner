@@ -13,6 +13,12 @@ You run on the same wheel he does. The game reads Squeekchain's public API every
 
 The big wheel in the background spins at Squeektoshi's actual RPM.
 
+## Wallet (Sepolia)
+
+- **Connect Wallet** (MetaMask or any EIP-1193 wallet) switches you to Ethereum Sepolia (chainId 11155111), adding the network if needed, and shows your address and Sepolia ETH balance.
+- After a run, **Sign score** signs a message with your score, seeds, the Squeek block and the wheel state at the finish (`personal_sign`, no gas, no transaction). Signed runs are listed per wallet.
+- On a phone without a wallet browser, Connect opens the game inside the MetaMask app.
+
 ## Play
 
 Open `index.html` in any browser, or play the hosted version via GitHub Pages.
@@ -25,7 +31,7 @@ If the Squeekchain API can't be reached from your browser, the game falls back t
 
 ## Tech
 
-Single static `index.html`, plain JavaScript and Canvas, no build step, no wallet, no transactions. Free to play.
+Single static `index.html`, plain JavaScript and Canvas with a dot-matrix renderer, no build step, no dependencies. Wallet is optional and never sends a transaction. Free to play.
 
 ## Squeekchain Genesis
 
