@@ -23,7 +23,7 @@ a{color:var(--amb)}details summary{cursor:pointer;color:var(--mut)}pre{white-spa
  <div class="row"><span>Jaringan</span><span>Ethereum mainnet</span></div>
  <div class="row"><span>Harga</span><span>0.5 IMD + gas ETH</span></div>
  <div class="row"><span>Aksi</span><span>job.open (site-content-check, host)</span></div>
- <div class="row"><span>Sumber</span><span>gosof32/wheel-runner @ 77bde18</span></div>
+ <div class="row"><span>Sumber</span><span>gosof32/wheel-runner @ 82b78a0</span></div>
  <div class="row"><span>Label situs</span><span>wheel-runner</span></div>
 </div>
 
@@ -46,7 +46,7 @@ a{color:var(--amb)}details summary{cursor:pointer;color:var(--mut)}pre{white-spa
 const INTAKE="0xa43e6f75ee006411f79ac1c84120606c2330de82";
 const IMD="0xd34a99bc0f67ae1bbd63c660e6d0b0dd03e263b7";
 const PRICE=500000000000000000n;
-const BRIEF={"objective":"Host Wheel Runner, an existing finished static browser game for Squeekchain, exactly as it is in this repository (index.html at the root, no build step). Do not rewrite or redesign it. Wheel Runner is a dot-matrix endless runner whose speed and score multiplier follow Squeektoshi the hamster's live wheel RPM from the Squeekchain public API (api.squeekchain.com/v1/status and /v1/economy/state), with an on-chain fallback that reads SqueekCore.state() on Ethereum Sepolia at 0x74665dAecA35A2303e767E76a2FF1FB6F93e119f. When the hamster sleeps the game switches to Night Mode, a new Squeek block grants a Golden Wheel shield, and players can sign their score with a Sepolia wallet (personal_sign, no transaction). It also has chiptune sound, homing rockets, a Turbo meter, maps, unlockable skins, daily rewards and achievements stored on the player's device. Check the site content and pin it.","repoUrl":"https://github.com/gosof32/wheel-runner.git","baseCommit":"77bde18ccbaf26775aee7b8914df7274b7a34dd2","shape":"chain","steps":[{"skill":"site-content-check"}],"ipfs":"wheel-runner","github":false};
+const BRIEF={"objective":"Host Wheel Runner, an existing finished static browser game for Squeekchain, exactly as it is in this repository (index.html at the root, no build step). Do not rewrite or redesign it. Wheel Runner is a dot-matrix endless runner whose speed and score multiplier follow Squeektoshi the hamster's live wheel RPM from the Squeekchain public API (api.squeekchain.com/v1/status and /v1/economy/state), with an on-chain fallback that reads SqueekCore.state() on Ethereum Sepolia at 0x74665dAecA35A2303e767E76a2FF1FB6F93e119f. When the hamster sleeps the game switches to Night Mode, a new Squeek block grants a Golden Wheel shield, and players can sign their score with a Sepolia wallet (personal_sign, no transaction). It also has chiptune sound, homing rockets, a Turbo meter, a seed blaster and cooldown skills, six playable characters, maps, unlockable skins, daily rewards and achievements stored on the player's device. Check the site content and pin it.","repoUrl":"https://github.com/gosof32/wheel-runner.git","baseCommit":"82b78a08ad62639495d6213c4d38768025f4779f","shape":"chain","steps":[{"skill":"site-content-check"}],"ipfs":"wheel-runner","github":false};
 const $=id=>document.getElementById(id);
 $("brief").textContent=JSON.stringify(BRIEF,null,2);
 let me=null;const eth=window.ethereum;
