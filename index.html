@@ -76,7 +76,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #runs li{list-style:none;display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;border-bottom:1px dashed var(--line);color:#c4c4cc}
 #runs li b{color:var(--acc);font-weight:700}
 #pause{position:absolute;right:10px;top:10px;width:36px;height:36px;display:none;place-items:center;border-radius:8px;border:1px solid var(--line2);background:rgba(10,10,11,.75);color:var(--acc);font:700 13px 'JetBrains Mono',monospace;cursor:pointer;z-index:2}
-#ach{position:absolute;left:50%;bottom:14px;transform:translate(-50%,20px);opacity:0;transition:.3s;background:rgba(10,10,11,.92);border:1px solid var(--acc);border-radius:10px;padding:8px 14px;text-align:center;pointer-events:none;box-shadow:0 0 24px color-mix(in srgb,var(--acc) 30%,transparent);z-index:3;white-space:nowrap}
+#ach{position:absolute;left:50%;bottom:64px;transform:translate(-50%,20px);opacity:0;transition:.3s;background:rgba(10,10,11,.92);border:1px solid var(--acc);border-radius:10px;padding:8px 14px;text-align:center;pointer-events:none;box-shadow:0 0 24px color-mix(in srgb,var(--acc) 30%,transparent);z-index:3;white-space:nowrap}
 #ach.on{opacity:1;transform:translate(-50%,0)}#ach b{display:block;font:400 24px 'VT323',monospace;color:var(--acc);letter-spacing:1px}#ach span{font-size:11px;color:#c4c4cc}
 .nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.nav .btn{font-size:11px;padding:10px 6px;position:relative}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red);vertical-align:middle;margin-left:2px}
@@ -105,9 +105,17 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #turbo{position:absolute;right:10px;bottom:10px;width:92px;height:44px;display:none;border-radius:10px;border:1px solid var(--line2);background:rgba(10,10,11,.8);color:var(--mut);font:700 12px 'JetBrains Mono',monospace;letter-spacing:2px;cursor:pointer;overflow:hidden;z-index:2;touch-action:none}
 #turbo i{position:absolute;left:0;top:0;bottom:0;width:0;background:color-mix(in srgb,var(--acc) 35%,transparent);transition:width .15s}
 #turbo span{position:relative}#turbo.ready{color:#0a0a0b;border-color:var(--acc);background:var(--acc);box-shadow:0 0 18px var(--acc);animation:tp .6s infinite alternate}
+#skills{position:absolute;right:108px;bottom:10px;display:none;gap:6px;z-index:2}
+#skills button{position:relative;width:48px;height:44px;border-radius:10px;border:1px solid var(--line2);background:rgba(10,10,11,.8);color:var(--acc);font:700 15px 'JetBrains Mono',monospace;cursor:pointer;overflow:hidden;touch-action:none;padding:0}
+#skills button i{position:absolute;left:0;right:0;bottom:0;height:0;background:rgba(255,255,255,.12)}
+#skills button em{position:absolute;right:3px;top:2px;font:600 8px 'JetBrains Mono',monospace;font-style:normal;color:var(--mut)}
+#skills button b{position:absolute;left:0;right:0;bottom:2px;font:700 8.5px 'JetBrains Mono',monospace;letter-spacing:.5px;color:var(--txt)}
+#skills button span{position:relative;top:-5px}
+#skills button.cd{color:var(--mut);border-color:var(--line)}#skills button.act{background:var(--acc);color:#0a0a0b;box-shadow:0 0 14px var(--acc)}#skills button.act b{color:#0a0a0b}
+@media (max-width:640px){#skills{right:auto;left:10px}#skills button{width:44px}}
 #turbo.ready i{display:none}#turbo.on{color:#0a0a0b;background:#ff4b4b;border-color:#ff4b4b;box-shadow:0 0 22px #ff4b4b}
 @keyframes tp{to{transform:scale(1.06)}}
-.maps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}.mapb{font-size:9.5px;padding:9px 2px;letter-spacing:.5px}
+.maps{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin-top:6px}.mapb{font-size:9.5px;padding:9px 2px;letter-spacing:.5px}
 @media (max-width:640px){.maps{grid-template-columns:repeat(3,1fr)}}
 footer{display:flex;justify-content:space-between;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);gap:10px}
 footer a{color:var(--mut)}
@@ -147,6 +155,7 @@ footer a{color:var(--mut)}
     <div id="toast"></div>
     <div id="ach"></div>
     <button id="pause" aria-label="Pause">❚❚</button>
+    <div id="skills"><button data-sk="blaster" aria-label="Fire"><i></i><em>F</em><span>➶</span><b id="ammo">10</b></button><button data-sk="dash" aria-label="Dash"><i></i><em>E</em><span>»</span><b>DASH</b></button><button data-sk="slow" aria-label="Slow-mo"><i></i><em>Q</em><span>◷</span><b>SLOW</b></button><button data-sk="pulse" aria-label="Squeek Pulse"><i></i><em>R</em><span>◉</span><b>PULSE</b></button></div>
     <button id="turbo" aria-label="Turbo"><i id="tfill"></i><span>TURBO</span></button>
     <div id="overlay">
       <div class="card" id="menu"></div>
@@ -470,7 +479,7 @@ const SZ=k=>({w:SPR[k][0].length,h:SPR[k].length});
    ========================================================= */
 const SAVE_KEY='wr_save_v2';
 const SAVE=(()=>{let s={}; try{s=JSON.parse(localStorage.getItem(SAVE_KEY))||{}}catch(e){}
-  return Object.assign({settings:{},stats:{},ach:{},skins:['classic'],skin:'classic',maps:['meadow'],map:'meadow',bank:0,daily:{last:'',streak:0}},s);})();
+  return Object.assign({settings:{},stats:{},ach:{},skins:['classic'],skin:'classic',skills:['blaster','dash'],chars:['hamster'],char:'hamster',maps:['meadow'],map:'meadow',bank:0,daily:{last:'',streak:0}},s);})();
 SAVE.settings=Object.assign({music:true,sfx:true,vol:.7,vib:true,shake:true},SAVE.settings);
 SAVE.stats=Object.assign({runs:0,seeds:0,rockets:0,gold:0,calls:0,longest:0},SAVE.stats);
 const persist=()=>localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));
@@ -507,6 +516,12 @@ const SFX={
   seed:()=>{tone(988,.05,'square',.08);tone(1319,.08,'square',.08,0,.045);},
   gold:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.13,'square',.11,0,i*.06)),
   magnet:()=>tone(180,.35,'triangle',.16,700),
+  shoot:()=>{tone(880,.07,'square',.07,440);},
+  hit:()=>{noise(.12,.12,2500);tone(300,.08,'square',.06,120);},
+  dash:()=>{noise(.25,.14,6000);tone(300,.2,'sawtooth',.08,900);},
+  slow:()=>{tone(500,.6,'sine',.14,120);tone(250,.6,'triangle',.08,60);},
+  pulse:()=>{tone(90,.5,'sine',.22,40);noise(.4,.18,1200);[440,660,990].forEach((f,i)=>tone(f,.12,'square',.07,0,i*.05));},
+  empty:()=>tone(120,.06,'square',.06),
   warn:()=>tone(1046,.07,'sawtooth',.07),
   launch:()=>{noise(.45,.22,4000);tone(500,.4,'sawtooth',.05,-380);},
   boom:()=>{noise(.7,.45,1200);tone(120,.5,'sine',.4,-90);},
@@ -564,6 +579,31 @@ const MAPS={
   space:{n:'Orbit',d:'Low gravity, asteroids instead of traps',p:500},
   cave:{n:'Lava Cave',d:'Stalagmites, lava glow, no sky',p:800},
 };
+const SKILLS={
+  blaster:{n:'Seed Blaster',d:'Shoots seeds forward (F). Each seed you pick up is 1 ammo. Breaks boxes, cats, owls and flying rockets.',p:0},
+  dash:{n:'Wheel Dash',d:'Half a second of invincible speed (E). Phase through anything. 7s cooldown.',p:0},
+  slow:{n:'Hamster Time',d:'The world slows to half speed for 3.5s (Q). 16s cooldown.',p:300},
+  pulse:{n:'Squeek Pulse',d:'Shockwave that wipes every rocket and nearby obstacle (R). 22s cooldown.',p:500},
+  triple:{n:'Triple Shot',d:'Blaster upgrade: every shot fires 3 seeds in a spread.',p:600,up:1},
+  drum:{n:'Big Pouch',d:'Blaster upgrade: start with 25 ammo, hold up to 60.',p:400,up:1},
+};
+const CD={dash:7,slow:16,pulse:22};
+const CHARS={
+  hamster:{n:'Squeek',d:'The original wheel runner. Balanced.',p:0,body:[
+  "...44.......","..4554..44..",".444444455..","44444444404.","444444444445","4444455554..",".44445555..."]},
+  bunny:{n:'Hopper',d:'Bunny. Jumps 20% higher.',p:300,body:[
+  ".......4.4..",".......4.4..",".......5.5..","..444444444.",".4444444404.","44444444445.","544444444...","5444455554..",".44445555..."]},
+  mouse:{n:'Pip',d:'Mouse. Smaller body, easier to dodge.',p:350,body:[
+  "......33....",".....3553...","...4444334..","3.44444404..","34444444445.",".3444555....","..44555....."]},
+  squirrel:{n:'Nutty',d:'Squirrel. Triple jump.',p:450,body:[
+  ".55.........","4455....44..","44455.4454..",".4444444404.","..4444444445","..44455554..","...4455555.."]},
+  hedgehog:{n:'Spike',d:'Hedgehog. Spikes absorb 1 hit, recharge every 25s.',p:500,body:[
+  "..3.3.3.....",".3333333....","3333333355..","33333335504.","333333555555",".3333355554.","..33555555.."]},
+  bot:{n:'SQK-1',d:'Robot hamster. Blaster ammo refills by itself.',p:0,lock:'sniper',body:[
+  "......3.....","......5.....","..33333333..","..34444443..","..34544543.4","..34444443..","..33333333.."]},
+};
+for(const [id,c] of Object.entries(CHARS)) for(const f of ['ham1','ham2','hamJ']) SPR['c_'+id+'_'+f]=c.body.concat(SPR[f].slice(7)).map(r=>r.padEnd(12,'.'));
+const curChar=()=>CHARS[SAVE.char]?SAVE.char:'hamster';
 const MAPOBS={desert:{box:'cactus'},space:{trap:'rock'},cave:{box:'stal'}};
 const hsh=n=>{n=(n^61)^(n>>>16); n=n+(n<<3); n=n^(n>>>4); n=Math.imul(n,0x27d4eb2d); return (n^(n>>>15))>>>0;};
 function rainbowC(ch,j,t){ const h=((t/8)+j*28)%360; return ch==='3'?`hsl(${h},80%,30%)`:ch==='5'?`hsl(${h},100%,85%)`:`hsl(${h},100%,60%)`; }
@@ -577,13 +617,14 @@ const ACH=[
   {id:'night',n:'Night Owl',d:'Score 1,000 while Squeektoshi sleeps',r:60},
   {id:'prophet',n:'Prophet',d:'Call the wheel right 5 times',r:80,p:()=>[SAVE.stats.calls,5]},
   {id:'marathon',n:'Marathon',d:'Survive 90 seconds in one run',r:100},
+  {id:'sniper',n:'Sharpshooter',d:'Shoot down 25 things with the Seed Blaster (unlocks SQK-1)',r:80,char:'bot',p:()=>[SAVE.stats.shot||0,25]},
   {id:'turbo',n:'Overdrive',d:'Smash 10 things in Turbo mode',r:70,p:()=>[SAVE.stats.smashed||0,10]},
   {id:'signed',n:'On the Record',d:'Sign a score with your wallet',r:30},
 ];
 const ACHQ=[];
 function unlock(id){
   if(SAVE.ach[id]) return; const a=ACH.find(x=>x.id===id); if(!a) return;
-  SAVE.ach[id]=Date.now(); SAVE.bank+=a.r; if(a.skin&&!SAVE.skins.includes(a.skin)) SAVE.skins.push(a.skin); persist();
+  SAVE.ach[id]=Date.now(); SAVE.bank+=a.r; if(a.skin&&!SAVE.skins.includes(a.skin)) SAVE.skins.push(a.skin); if(a.char&&!SAVE.chars.includes(a.char)) SAVE.chars.push(a.char); persist();
   ACHQ.push(a); if(ACHQ.length===1) showAch();
 }
 function showAch(){ const a=ACHQ[0]; if(!a) return; SFX.ach(); const el=$('ach'); el.innerHTML=`<b>🏆 ${a.n}</b><span>+${a.r} seeds${a.skin?' · '+SKINS[a.skin].n+' skin':''}</span>`; el.classList.add('on');
@@ -598,20 +639,35 @@ const dailyAmt=s=>10*Math.min(7,s);
 let bestScore=+localStorage.getItem('wr_best')||0; $('best').textContent=bestScore;
 let state='menu', prediction=null, lastRun=null;
 let P={x:30,y:78,vy:0,j:0}, obs=[],seeds=[],parts=[],rockets=[],items=[],dist=0,score=0,seedsGot=0,speed=0,shield=0,magnet=0,nightT=0,
-    spawnT=1,seedT=.5,rocketT=8,itemT=18,runStart=0,frame=0,shake=0,runRockets=0,runGold=0,playTime=0,turbo=0,tmeter=0,runSmash=0;
+    spawnT=1,seedT=.5,rocketT=8,itemT=18,runStart=0,frame=0,shake=0,runRockets=0,runGold=0,playTime=0,turbo=0,tmeter=0,runSmash=0,bullets=[],ammo=10,dashT=0,slowT=0,pulseFx=0,cds={dash:0,slow:0,pulse:0},runShot=0,fireCd=0,spikeT=0,botT=0;
 function reset(){P={x:Math.round(LW*.18),y:GY,vy:0,j:0}; obs=[];seeds=[];parts=[];rockets=[];items=[];dist=0;score=0;seedsGot=0;speed=0;shield=0;magnet=0;
-  spawnT=1.2;seedT=.5;rocketT=7+Math.random()*3;itemT=14+Math.random()*8;runStart=performance.now();shake=0;runRockets=0;runGold=0;playTime=0;turbo=0;tmeter=0;runSmash=0;turboUI();}
-function start(){auInit(); SFX.click(); reset(); state='play'; $('overlay').style.display='none'; $('pause').style.display='grid'; $('turbo').style.display='block'; $('stage').classList.add('glow');
+  spawnT=1.2;seedT=.5;rocketT=7+Math.random()*3;itemT=14+Math.random()*8;runStart=performance.now();shake=0;runRockets=0;runGold=0;playTime=0;turbo=0;tmeter=0;runSmash=0;bullets=[];ammo=has('drum')?25:10;dashT=0;slowT=0;pulseFx=0;cds={dash:0,slow:0,pulse:0};runShot=0;fireCd=0;spikeT=curChar()==='hedgehog'?.001:0;botT=0;turboUI();skUI();}
+function start(){auInit(); SFX.click(); reset(); state='play'; $('overlay').style.display='none'; $('pause').style.display='grid'; showCtl(1); $('stage').classList.add('glow');
   toast(live.running?`Squeektoshi @ ${live.rpm.toFixed(0)} RPM · GO`:'Squeektoshi is asleep · NIGHT MODE');}
-function jump(){ if(state!=='play') return; if(P.j<2){P.vy=P.j?-118:-132; (P.j?SFX.djump:SFX.jump)(); P.j++; burst(P.x+5,P.y,4,3); vib(8);} }
-function pause(){ if(state!=='play') return; state='pause'; SFX.click(); $('pause').style.display='none'; $('turbo').style.display='none'; screen('pause'); }
+function jump(){ if(state!=='play') return; const ch=curChar(), jm=ch==='bunny'?1.2:1; if(P.j<(ch==='squirrel'?3:2)){P.vy=(P.j?-118:-132)*jm; (P.j?SFX.djump:SFX.jump)(); P.j++; burst(P.x+5,P.y,4,3); vib(8);} }
+function pause(){ if(state!=='play') return; state='pause'; SFX.click(); $('pause').style.display='none'; showCtl(0); screen('pause'); }
+const has=k=>(SAVE.skills||[]).includes(k);
+function showCtl(on){ $('turbo').style.display=on?'block':'none'; $('skills').style.display=on?'flex':'none'; if(on) skUI(); }
+function maxAmmo(){ return has('drum')?60:40; }
+function shoot(){ if(state!=='play'||!has('blaster')||fireCd>0) return; if(ammo<=0){ SFX.empty(); return; } ammo--; fireCd=.16; SFX.shoot();
+  const y=P.y-5, spr=has('triple')?[-45,0,45]:[0]; for(const vy of spr) bullets.push({x:P.x+12,y,vy}); skUI(); }
+function useSkill(k){ if(state!=='play') return; if(k==='blaster') return shoot(); if(!has(k)||cds[k]>0) return;
+  cds[k]=CD[k]; vib(15);
+  if(k==='dash'){ dashT=.55; SFX.dash(); shake=.1; toast('» DASH'); }
+  if(k==='slow'){ slowT=3.5; SFX.slow(); toast('◷ Hamster Time'); }
+  if(k==='pulse'){ pulseFx=.6; SFX.pulse(); shake=.35; let n=0; for(const r of rockets){ if(!r.dead){ r.dead=true; n++; burst(r.ph==='fly'?r.x+4:LW-6,r.y,14,5,90);} } for(const o of obs){ if(o.x<P.x+90&&o.x>P.x-4){ burst(o.x+o.w/2,o.y-o.h/2,12,4,80); o.x=-99; n++; } } score+=n*20; runShot+=n; toast(n?`◉ Pulse wiped ${n}`:'◉ Squeek Pulse'); }
+  skUI(); }
+function skUI(){ const w=$('skills'); if(!w) return; w.querySelectorAll('button').forEach(b=>{ const k=b.dataset.sk; b.style.display=has(k)?'block':'none';
+    if(k==='blaster'){ $('ammo').textContent=ammo; b.classList.toggle('cd',ammo<=0); return; }
+    const c=cds[k]||0, act=(k==='dash'&&dashT>0)||(k==='slow'&&slowT>0); b.querySelector('i').style.height=(c>0?c/CD[k]*100:0)+'%'; b.classList.toggle('cd',c>0&&!act); b.classList.toggle('act',act); }); }
 function addMeter(v){ if(turbo>0) return; const was=tmeter>=1; tmeter=Math.min(1,tmeter+v); if(!was&&tmeter>=1){ SFX.ready(); toast('⚡ TURBO ready · tap TURBO or Shift'); } turboUI(); }
 function fireTurbo(){ if(state!=='play'||turbo>0||tmeter<1) return; turbo=5; tmeter=0; SFX.turbo(); vib([20,20,40]); shake=.25; toast('⚡ TURBO · smash everything'); turboUI(); }
 function turboUI(){ const b=$('turbo'); if(!b) return; $('tfill').style.width=(turbo>0?100:tmeter*100)+'%'; b.classList.toggle('ready',tmeter>=1&&turbo<=0); b.classList.toggle('on',turbo>0); }
-function resume(){ state='play'; SFX.click(); $('overlay').style.display='none'; $('pause').style.display='grid'; $('turbo').style.display='block'; lastT=0; }
+function resume(){ state='play'; SFX.click(); $('overlay').style.display='none'; $('pause').style.display='grid'; showCtl(1); lastT=0; }
 addEventListener('keydown',e=>{
   if(['Space','ArrowUp','KeyW'].includes(e.code)){e.preventDefault(); if(state==='play') jump(); else if(state==='pause') resume(); else if(document.activeElement.tagName!=='BUTTON'&&document.activeElement.tagName!=='INPUT') start();}
   if(['ShiftLeft','ShiftRight','KeyT','ArrowRight','KeyD'].includes(e.code)){e.preventDefault(); fireTurbo();}
+  if(state==='play'){ if(e.code==='KeyF'||e.code==='KeyJ'){e.preventDefault(); shoot();} if(e.code==='KeyE') useSkill('dash'); if(e.code==='KeyQ') useSkill('slow'); if(e.code==='KeyR') useSkill('pulse'); }
   if(e.code==='KeyP'||e.code==='Escape'){ if(state==='play') pause(); else if(state==='pause') resume(); }
 });
 cv.addEventListener('pointerdown',e=>{e.preventDefault(); jump();});
@@ -629,15 +685,19 @@ function spawn(){
 }
 function fireRocket(off=0){ rockets.push({ph:'warn',t:1.25+off,y:P.y-5,beep:0,x:LW+2,lock:false}); }
 function step(dt){
-  frame+=dt; playTime+=dt;
+  const rdt=dt; frame+=dt; playTime+=dt;
+  for(const k in cds) if(cds[k]>0) cds[k]=Math.max(0,cds[k]-rdt); if(fireCd>0) fireCd-=rdt; if(pulseFx>0) pulseFx-=rdt;
+  if(dashT>0){ dashT-=rdt; P.vy=Math.min(P.vy,0)*.5; for(let i=0;i<2;i++) parts.push({x:P.x,y:P.y-1-Math.random()*8,vx:-120,vy:0,l:.25,s:3}); }
+  if(slowT>0){ slowT-=rdt; if(slowT<=0) toast('Time back to normal'); dt*=.5; }
+  if(Math.floor(frame*10)!==Math.floor((frame-rdt)*10)) skUI();
   const rpm=live.running?Math.max(20,live.rpm):0;
-  const target=(live.running?50+rpm*0.62:40)*Math.min(1.6,1+dist/12000)*(turbo>0?1.8:1);
+  const target=(live.running?50+rpm*0.62:40)*Math.min(1.6,1+dist/12000)*(turbo>0?1.8:1)*(dashT>0?2.2:1);
   speed+= (target-speed)*Math.min(1,dt*(turbo>0?3:0.9));
   if(turbo>0){ turbo-=dt; if(Math.random()<.9) parts.push({x:P.x-1,y:P.y-2-Math.random()*6,vx:-60-Math.random()*40,vy:(Math.random()-.5)*20,l:.3,s:Math.random()<.5?5:4}); if(turbo<=0){ turbo=0; shield=Math.max(shield,1); toast('Turbo over'); } turboUI(); }
   dist+=speed*dt;
   const mult=1+rpm/100, nm=live.running?1:2;
   score+=speed*dt*0.05*mult*(turbo>0?2:1);
-  P.vy+=(SAVE.map==='space'?250:360)*dt; P.y+=P.vy*dt; if(P.y>=GY){P.y=GY;P.vy=0;P.j=0;}
+  P.vy+=(SAVE.map==='space'?250:360)*rdt*(dashT>0?0:1); P.y+=P.vy*rdt; if(P.y>=GY){P.y=GY;P.vy=0;P.j=0;}
   spawnT-=dt; if(spawnT<=0){spawn(); spawnT=Math.max(.55,1.5-dist/9000)*(.7+Math.random()*.8)*(60/Math.max(40,speed)+.35);}
   seedT-=dt; if(seedT<=0){const n=1+Math.floor(Math.random()*4), y=GY-5-Math.floor(Math.random()*22); for(let i=0;i<n;i++) seeds.push({x:LW+4+i*6,y}); seedT=.9+Math.random()*1.2;}
   // rockets: start after ~6s, faster and in volleys as the run goes on
@@ -645,15 +705,23 @@ function step(dt){
       rocketT=Math.max(2.6,7.5-dist/2500)*(.75+Math.random()*.6)*(live.running?1:.85); } }
   itemT-=dt; if(itemT<=0){ items.push({k:'magnet',x:LW+4,y:GY-8-Math.floor(Math.random()*16)}); itemT=20+Math.random()*12; }
   for(const o of obs) o.x-=speed*dt; for(const s of seeds) s.x-=speed*dt; for(const it of items) it.x-=speed*dt;
-  const hx=P.x+1,hy=P.y-9+1,hw=10,hh=7, pcx=P.x+6, pcy=P.y-5;
+  const CH=curChar();
+  if(CH==='hedgehog'&&spikeT>0.001){ spikeT-=rdt; if(spikeT<=0.001){ spikeT=.001; toast('Spikes ready'); } }
+  if(CH==='bot'&&has('blaster')){ botT+=rdt; if(botT>=1.5){ botT=0; if(ammo<maxAmmo()) ammo++; } }
+  const small=CH==='mouse', hx=P.x+(small?2:1),hy=P.y-9+(small?2:1),hw=small?8:10,hh=small?6:7, pcx=P.x+6, pcy=P.y-5;
   if(magnet>0){ magnet-=dt; for(const s of seeds){ if(s.gold) continue; const dx=pcx-s.x, dy=pcy-s.y, d=Math.hypot(dx,dy); if(d<55){ s.x+=dx/d*160*dt; s.y+=dy/d*160*dt; } } }
   obs=obs.filter(o=>o.x>-14); seeds=seeds.filter(s=>s.x>-8&&!s.got); items=items.filter(i=>i.x>-10&&!i.got);
   for(const s of seeds){const sw=s.gold?7:3; if(s.x<hx+hw&&s.x+sw>hx&&s.y-sw<hy+hh&&s.y>hy){ s.got=true;
-    if(s.gold){shield=6; score+=50; runGold++; addMeter(.35); burst(s.x,s.y-3,14,5); SFX.gold(); vib(20); toast('🛡 Golden Wheel · shield 6s');} else {seedsGot++; score+=5*nm; burst(s.x+1,s.y-1,3,5); SFX.seed(); addMeter(.05);} }}
+    if(s.gold){shield=6; score+=50; runGold++; ammo=Math.min(maxAmmo(),ammo+10); addMeter(.35); burst(s.x,s.y-3,14,5); SFX.gold(); vib(20); toast('🛡 Golden Wheel · shield 6s');} else {seedsGot++; if(has('blaster')&&ammo<maxAmmo()){ammo++;} score+=5*nm; burst(s.x+1,s.y-1,3,5); SFX.seed(); addMeter(.05);} }}
   for(const it of items){ if(it.x<hx+hw&&it.x+7>hx&&it.y-7<hy+hh&&it.y>hy){ it.got=true; magnet=8; SFX.magnet(); burst(it.x+3,it.y-3,10,4); toast('🧲 Seed magnet · 8s'); } }
   if(shield>0) shield-=dt;
   for(const o of obs){ const ox=o.x+1,oy=o.y-o.h+1,ow=o.w-2,oh=o.h-1;
-    if(hx<ox+ow&&hx+hw>ox&&hy<oy+oh&&hy+hh>oy){ if(turbo>0){o.x=-99; burst(ox,oy,16,5,90); score+=30; runSmash++; shake=.12; SFX.coin();} else if(shield>0){o.x=-99; burst(ox,oy,10,5); score+=20; SFX.coin();} else return over(o.k); } }
+    if(hx<ox+ow&&hx+hw>ox&&hy<oy+oh&&hy+hh>oy){ if(turbo>0||dashT>0){o.x=-99; burst(ox,oy,16,5,90); score+=30; runSmash++; shake=.12; SFX.coin();} else if(shield>0){o.x=-99; burst(ox,oy,10,5); score+=20; SFX.coin();} else if(spikeT===.001){ spikeT=25; o.x=-99; burst(ox,oy,14,3,80); shake=.2; SFX.hit(); toast('Spikes took the hit · 25s'); } else return over(o.k); } }
+  // seed blaster
+  for(const b of bullets){ b.x+=(260+speed*.2)*rdt; b.y+=b.vy*rdt;
+    for(const o of obs){ if(o.x<0) continue; if(b.x>o.x&&b.x<o.x+o.w+2&&b.y>o.y-o.h-1&&b.y<o.y+1){ b.dead=true; burst(o.x+o.w/2,o.y-o.h/2,10,4,70); o.x=-99; score+=10; runShot++; SFX.hit(); break; } }
+    if(!b.dead) for(const r of rockets){ if(r.ph==='fly'&&!r.dead&&b.x>r.x-1&&b.x<r.x+11&&Math.abs(b.y-r.y)<4){ b.dead=true; r.dead=true; explode(r.x+4,r.y); score+=25; runShot++; addMeter(.1); break; } } }
+  bullets=bullets.filter(b=>!b.dead&&b.x<LW+4&&b.y>0&&b.y<GY+2);
   // rocket logic
   for(const r of rockets){
     if(r.ph==='warn'){ r.t-=dt; if(!r.lock){ r.y+=(P.y-5-r.y)*Math.min(1,dt*4); if(r.t<.4) r.lock=true; }
@@ -661,7 +729,7 @@ function step(dt){
       if(r.t<=0){ r.ph='fly'; r.x=LW+2; SFX.launch(); } }
     else { r.x-=(speed+170)*dt; if(Math.random()<.7) parts.push({x:r.x+11,y:r.y+(Math.random()-.5)*2,vx:30,vy:(Math.random()-.5)*10,l:.35,s:2});
       const rx=r.x+1,ry=r.y-2,rw=9,rh=4;
-      if(!r.dead&&hx<rx+rw&&hx+hw>rx&&hy<ry+rh&&hy+hh>ry){ r.dead=true; explode(r.x+4,r.y); if(turbo>0){ score+=60; runSmash++; } else if(shield>0){ score+=40; toast('💥 Rocket blocked'); } else return over('rocket'); }
+      if(!r.dead&&hx<rx+rw&&hx+hw>rx&&hy<ry+rh&&hy+hh>ry){ r.dead=true; explode(r.x+4,r.y); if(turbo>0||dashT>0){ score+=60; runSmash++; } else if(shield>0){ score+=40; toast('💥 Rocket blocked'); } else if(spikeT===.001){ spikeT=25; toast('Spikes took the hit · 25s'); } else return over('rocket'); }
       if(!r.dead&&!r.passed&&r.x+10<P.x){ r.passed=true; runRockets++; score+=15; SFX.dodge(); addMeter(.2); } } }
   rockets=rockets.filter(r=>!r.dead&&r.x>-14);
   for(const p of parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.l-=dt;} parts=parts.filter(p=>p.l>0);
@@ -716,9 +784,14 @@ function render(t){
   }
   // hamster
   const name=P.y<GY?'hamJ':(Math.floor(frame*Math.max(6,speed/6))%2?'ham1':'ham2');
-  sprSkin(name,P.x,P.y-9);
+  const cn='c_'+curChar()+'_'+name, cs=SPR[cn]; sprSkin(cn,P.x,P.y-cs.length);
+  if(spikeT===.001&&Math.floor(t/200)%2) px(P.x+2,P.y-cs.length-1,5);
   if(shield>0&&Math.floor(t/90)%2){ for(let a=0;a<20;a++){const r=a/20*6.283; px(P.x+6+Math.cos(r)*8,P.y-5+Math.sin(r)*7,PAL.gold);} }
   if(turbo>0){ for(let i=0;i<10;i++){ const yy=((i*37+Math.floor(t/16)*7)%(GY-4))+2, xx=LW-((t/2+i*53)%LW); rect(xx,yy,6,1,2);} for(let a=0;a<6;a++) px(P.x+13+a%2,P.y-8+a,5); }
+  for(const b of bullets){ px(b.x,b.y,5); px(b.x-1,b.y,4); px(b.x-2,b.y,2); }
+  if(dashT>0){ for(let k=1;k<4;k++) for(let y=-8;y<0;y+=2) px(P.x-k*4,P.y+y,k===1?4:2); }
+  if(slowT>0){ for(let y=0;y<GY;y+=4) for(let x=(Math.floor(t/60)%8);x<LW;x+=8) px(x,y,1); for(let a=0;a<10;a++) px(P.x+6+Math.cos(a/10*6.283+t/200)*12,P.y-5+Math.sin(a/10*6.283+t/200)*10,3); }
+  if(pulseFx>0){ const rr=(1-pulseFx/.6)*LW*.8; for(let a=0;a<90;a++){const q=a/90*6.283; px(P.x+6+Math.cos(q)*rr,P.y-5+Math.sin(q)*rr*.6,5);} }
   if(magnet>0&&Math.floor(t/120)%2){ for(let a=0;a<14;a++){const r=a/14*6.283+t/300; px(P.x+6+Math.cos(r)*11,P.y-5+Math.sin(r)*9,4);} }
   for(const p of parts) px(p.x,p.y,p.s);
   let sx=0,sy=0; if(shake>0&&SAVE.settings.shake){ sx=Math.round((Math.random()-.5)*3)*CELL; sy=Math.round((Math.random()-.5)*3)*CELL; }
@@ -734,7 +807,7 @@ function render(t){
 const ICON={};
 function icon(name,shade){ const key=name+(shade||''); if(ICON[key]) return ICON[key];
   const s=SPR[name], c=document.createElement('canvas'), k=4; c.width=s[0].length*k; c.height=s.length*k; const x=c.getContext('2d');
-  const sk=name.startsWith('ham')&&shade&&SKINS[shade]&&SKINS[shade].c;
+  const sk=(name.startsWith('ham')||name.startsWith('c_'))&&shade&&SKINS[shade]&&SKINS[shade].c;
   for(let j=0;j<s.length;j++)for(let i=0;i<s[j].length;i++){const ch=s[j][i]; if(ch==='.') continue; x.fillStyle=(sk==='rainbow'&&ch!=='0'?rainbowC(ch,i,0):(sk&&sk[ch]))||(typeof shade==='string'&&shade.startsWith('#')?shade:PAL.day[+ch]); x.beginPath(); x.arc(i*k+k/2,j*k+k/2,k*.42,0,6.283); x.fill();}
   return ICON[key]=`<img class="ico" src="${c.toDataURL()}" alt="">`; }
 const ART='<div class="art"><canvas id="artc"></canvas></div>';
@@ -748,6 +821,7 @@ function screen(name){
      <h2>WHEEL <em>RUNNER</em></h2>
      <p>You run on Squeektoshi's wheel. His <b>live speed on Squeekchain</b> sets yours. Dodge traps, cats and homing rockets. When he sleeps, the world goes dark.</p>
      <div class="bank">${icon('seed')}<b>${SAVE.bank}</b> seeds banked · best <b>${bestScore}</b></div>
+     <div class="meta">Runner</div><div class="maps">${Object.entries(CHARS).map(([id,c])=>`<button class="btn mapb ${curChar()===id?'sel':''}" ${SAVE.chars.includes(id)?`data-char="${id}"`:'disabled'}>${SAVE.chars.includes(id)?'':'🔒 '}${c.n}</button>`).join('')}</div>
      <div class="meta">Map</div><div class="maps">${Object.entries(MAPS).map(([id,m])=>`<button class="btn mapb ${SAVE.map===id?'sel':''}" ${SAVE.maps.includes(id)?`data-map="${id}"`:'disabled'}>${SAVE.maps.includes(id)?'':'🔒 '}${m.n}</button>`).join('')}</div>
      ${predHTML()}
      <button class="btn primary" id="start">▶ Start run</button>
@@ -770,6 +844,8 @@ function screen(name){
      ${R(icon('seed'),'Seeds','+5 points each, x2 at night. Seeds you collect are banked for skins.')}
      ${R(icon('magnet'),'Seed magnet','Pulls nearby seeds to you for 8 seconds.')}
      ${R('<span class="gw">◎</span>','Golden Wheel','Drops only when a real Squeek block is mined on Squeekchain. 6s shield that smashes traps and rockets.')}
+     ${R('<span class="gw">➶</span>','Weapon & skills','Seed Blaster (F): every seed you grab is ammo, shoot boxes, cats, owls and flying rockets. Wheel Dash (E): invincible burst. Unlock Hamster Time (Q, slow-mo) and Squeek Pulse (R, wipes all rockets) plus Triple Shot and Big Pouch in Rewards. On phones, use the buttons.')}
+     ${R('<span class="gw">☻</span>','Characters','Squeek is balanced. Hopper the bunny jumps higher, Pip the mouse is smaller, Nutty the squirrel triple-jumps, Spike the hedgehog shrugs off one hit, and SQK-1 the robot (Sharpshooter achievement) refills ammo by itself.')}
      ${R('<span class="gw">▦</span>','Maps & skins','Spend banked seeds in Rewards on new maps (City, Dunes, Orbit with low gravity, Lava Cave) and hamster skins. Some skins only come from achievements.')}
      <div class="sec">Live from Squeekchain</div>
      ${R('<span class="gw">⟳</span>','Real wheel','Squeektoshi\'s live RPM sets your speed, score multiplier and even the music tempo. When he sleeps, Night Mode starts.')}
@@ -790,8 +866,10 @@ function screen(name){
      <div class="sec">Daily reward · streak ${SAVE.daily.streak||0}</div>
      <div class="days">${days}</div>
      <button class="btn primary" id="claim" ${claimed?'disabled':''}>${claimed?'Come back tomorrow':'Claim +'+dailyAmt(next)+' seeds'}</button>
+     <div class="sec">Characters</div><div class="skins">${Object.entries(CHARS).map(([id,c])=>{const own=SAVE.chars.includes(id), eq=curChar()===id; return `<div class="skin ${eq?'sel':''}">${icon('c_'+id+'_ham1',SAVE.skin)}<b>${c.n}</b><span class="lk">${c.d}</span>${eq?'<span class="eq">Playing</span>':own?`<button class="btn sm" data-char="${id}">Play</button>`:c.lock?'<span class="lk">Achievement</span>':`<button class="btn sm" data-buych="${id}" ${SAVE.bank<c.p?'disabled':''}>${c.p} seeds</button>`}</div>`;}).join('')}</div>
+     <div class="sec">Skills &amp; weapons</div><div class="skins">${Object.entries(SKILLS).map(([id,m])=>{const own=has(id); return `<div class="skin ${own?'sel':''}"><b>${m.n}</b><span class="lk">${m.d}</span>${own?'<span class="eq">Owned</span>':`<button class="btn sm" data-buysk="${id}" ${SAVE.bank<m.p||(m.up&&!has('blaster'))?'disabled':''}>${m.p} seeds</button>`}</div>`;}).join('')}</div>
      <div class="sec">Maps</div><div class="skins">${Object.entries(MAPS).map(([id,m])=>{const own=SAVE.maps.includes(id), eq=SAVE.map===id; return `<div class="skin ${eq?'sel':''}"><b>${m.n}</b><span class="lk">${m.d}</span>${eq?'<span class="eq">Selected</span>':own?`<button class="btn sm" data-map="${id}">Play here</button>`:`<button class="btn sm" data-buymap="${id}" ${SAVE.bank<m.p?'disabled':''}>${m.p} seeds</button>`}</div>`;}).join('')}</div>
-     <div class="sec">Hamster skins</div><div class="skins">${sk}</div>
+     <div class="sec">Skins (any character)</div><div class="skins">${sk}</div>
      <div class="sec">Achievements · ${Object.keys(SAVE.ach).length}/${ACH.length}</div>${ach}</div>`;
   }
   if(name==='settings'){
@@ -823,9 +901,12 @@ function bindMenu(){
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{SFX.click(); const t=b.dataset.nav; if(t==='back') screen(state==='pause'?'pause':home); else screen(t);});
   const s=$('start'); if(s) s.onclick=start;
   const rs=$('resume'); if(rs) rs.onclick=resume;
-  const q=$('quit'); if(q) q.onclick=()=>{ state='menu'; $('turbo').style.display='none'; $('stage').classList.remove('glow'); reset(); screen('main'); };
+  const q=$('quit'); if(q) q.onclick=()=>{ state='menu'; showCtl(0); $('stage').classList.remove('glow'); reset(); screen('main'); };
   const cl=$('claim'); if(cl) cl.onclick=()=>{ if(dailyClaimed()) return; SAVE.daily.streak=SAVE.daily.last===yesterday()?SAVE.daily.streak+1:1; SAVE.daily.last=today(); const a=dailyAmt(SAVE.daily.streak); SAVE.bank+=a; persist(); SFX.coin(); toast(`+${a} seeds · day ${SAVE.daily.streak}`); screen('rewards'); };
   document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{ SAVE.map=b.dataset.map; persist(); SFX.click(); screen(cur); });
+  document.querySelectorAll('[data-char]').forEach(b=>b.onclick=()=>{ SAVE.char=b.dataset.char; persist(); SFX.click(); screen(cur); });
+  document.querySelectorAll('[data-buych]').forEach(b=>b.onclick=()=>{ const id=b.dataset.buych, p=CHARS[id].p; if(SAVE.bank<p) return; SAVE.bank-=p; SAVE.chars.push(id); SAVE.char=id; persist(); SFX.gold(); toast(`${CHARS[id].n} joined`); screen('rewards'); });
+  document.querySelectorAll('[data-buysk]').forEach(b=>b.onclick=()=>{ const id=b.dataset.buysk, p=SKILLS[id].p; if(SAVE.bank<p) return; SAVE.bank-=p; SAVE.skills.push(id); persist(); SFX.gold(); toast(`${SKILLS[id].n} unlocked`); screen('rewards'); });
   document.querySelectorAll('[data-buymap]').forEach(b=>b.onclick=()=>{ const id=b.dataset.buymap, p=MAPS[id].p; if(SAVE.bank<p) return; SAVE.bank-=p; SAVE.maps.push(id); SAVE.map=id; persist(); SFX.gold(); toast(`${MAPS[id].n} unlocked`); screen('rewards'); });
   document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>{ SAVE.skin=b.dataset.equip; persist(); SFX.click(); screen('rewards'); });
   document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const id=b.dataset.buy, p=SKINS[id].p; if(SAVE.bank<p) return; SAVE.bank-=p; SAVE.skins.push(id); SAVE.skin=id; persist(); SFX.gold(); toast(`${SKINS[id].n} skin unlocked`); screen('rewards'); });
@@ -840,7 +921,7 @@ function bindMenu(){
 }
 function menu(){ screen('main'); }
 function over(by){
-  state='over'; $('stage').classList.remove('glow'); $('pause').style.display='none'; $('turbo').style.display='none';
+  state='over'; $('stage').classList.remove('glow'); $('pause').style.display='none'; showCtl(0);
   if(by==='rocket') vib([40,40,120]); else { SFX.hit(); vib(120); }
   let final=Math.floor(score), bonus='', ok=false;
   if(prediction){ok=(prediction==='run')===live.running; if(ok){final=Math.floor(final*1.5); bonus='Call correct · +50%';} else bonus='Wrong call · no bonus';} else bonus='No call made';
@@ -848,10 +929,10 @@ function over(by){
   const secs=((performance.now()-runStart)/1000).toFixed(1);
   const K={trap:'TRAP',box:'BOX',cat:'CAT',owl:'OWL',rocket:'ROCKET',cactus:'CACTUS',rock:'ASTEROID',stal:'STALAGMITE'};
   // progress
-  const st=SAVE.stats; st.runs++; st.seeds+=seedsGot; st.rockets+=runRockets; st.gold+=runGold; if(ok) st.calls++; st.longest=Math.max(st.longest,playTime); st.smashed=(st.smashed||0)+runSmash;
+  const st=SAVE.stats; st.runs++; st.seeds+=seedsGot; st.rockets+=runRockets; st.gold+=runGold; if(ok) st.calls++; st.longest=Math.max(st.longest,playTime); st.smashed=(st.smashed||0)+runSmash; st.shot=(st.shot||0)+runShot;
   SAVE.bank+=seedsGot; persist();
   unlock('first'); if(final>=1000) unlock('s1k'); if(final>=5000) unlock('s5k'); if(st.seeds>=250) unlock('seeds'); if(st.rockets>=15) unlock('rocket');
-  if(runGold) unlock('gold'); if(!live.running&&final>=1000) unlock('night'); if(st.calls>=5) unlock('prophet'); if(playTime>=90) unlock('marathon'); if(st.smashed>=10) unlock('turbo');
+  if(runGold) unlock('gold'); if(!live.running&&final>=1000) unlock('night'); if(st.calls>=5) unlock('prophet'); if(playTime>=90) unlock('marathon'); if(st.smashed>=10) unlock('turbo'); if(st.shot>=25) unlock('sniper');
   lastRun={score:final,seeds:seedsGot,block:live.block,wheel:live.running?'running':'asleep',rpm:Math.round(live.rpm),t:Date.now(),secs};
   overHTML=`${ART}<div class="body">
    <h2>${nb?'NEW <em>BEST</em>':'HIT BY <em>'+K[by]+'</em>'}</h2>
@@ -893,6 +974,7 @@ function artLoop(){
   artRAF=requestAnimationFrame(draw);
 }
 $('pause').onclick=e=>{e.stopPropagation(); pause();};
+document.querySelectorAll('#skills button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault(); e.stopPropagation(); auInit(); useSkill(b.dataset.sk);}));
 $('turbo').addEventListener('pointerdown',e=>{e.preventDefault(); e.stopPropagation(); auInit(); fireTurbo();});
 
 let lastT=0;
